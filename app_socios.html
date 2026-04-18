@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carga de Facturas — Socios</title>
+<style>
+  /* ── Reset & base ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #F7F6F2;
+    --surface:   #FFFFFF;
+    --border:    #E2E0D8;
+    --border2:   #C8C6BC;
+    --text:      #1A1916;
+    --muted:     #6B6960;
+    --accent:    #1A6B4A;
+    --accent-lt: #E1F5EE;
+    --accent-md: #5DCAA5;
+    --danger:    #A32D2D;
+    --danger-lt: #FCEBEB;
+    --radius:    10px;
+    --radius-sm: 6px;
+    --shadow:    0 1px 3px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.05);
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem 1rem 4rem;
+  }
+
+  /* ── Header ── */
+  .header {
+    width: 100%;
+    max-width: 560px;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 18px;
+  }
+  .header h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; }
+  .header p  { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+  /* ── Config banner ── */
+  .config-banner {
+    width: 100%; max-width: 560px;
+    background: #FFF8E1; border: 1px solid #F9CA24;
+    border-radius: var(--radius); padding: 12px 16px;
+    margin-bottom: 1.5rem; font-size: 13px; color: #7D5A00;
+    display: none;
+  }
+  .config-banner.show { display: block; }
+  .config-banner strong { display: block; margin-bottom: 4px; }
+
+  /* ── Card ── */
+  .card {
+    width: 100%; max-width: 560px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  /* ── Steps nav ── */
+  .steps {
+    display: flex; align-items: center;
+    gap: 0; margin-bottom: 1.75rem;
+    width: 100%; max-width: 560px;
+  }
+  .step-item { display: flex; flex-direction: column; align-items: center; flex: 1; }
+  .step-circle {
+    width: 28px; height: 28px; border-radius: 50%;
+    border: 2px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; color: var(--muted);
+    background: var(--surface); position: relative; z-index: 1;
+    transition: all .2s;
+  }
+  .step-circle.active { border-color: var(--accent); color: var(--accent); }
+  .step-circle.done   { border-color: var(--accent); background: var(--accent); color: white; }
+  .step-label { font-size: 10px; color: var(--muted); margin-top: 4px; text-align: center; }
+  .step-line  { flex: 1; height: 2px; background: var(--border); margin-top: -14px; }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 11px; font-weight: 600; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 1rem;
+  }
+
+  /* ── Form elements ── */
+  label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 5px; }
+  input, select {
+    width: 100%; padding: 9px 12px; font-size: 14px;
+    border: 1px solid var(--border2); border-radius: var(--radius-sm);
+    background: var(--surface); color: var(--text);
+    outline: none; transition: border .15s;
+  }
+  input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,107,74,.1); }
+  .field { margin-bottom: 14px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* ── Buttons ── */
+  .btn {
+    font-size: 14px; font-weight: 500; padding: 9px 20px;
+    border-radius: var(--radius-sm); cursor: pointer;
+    border: 1px solid var(--border2); background: var(--surface);
+    color: var(--text); transition: all .15s;
+  }
+  .btn:hover { background: var(--bg); }
+  .btn-primary {
+    background: var(--accent); color: white; border-color: var(--accent);
+  }
+  .btn-primary:hover { background: #155c3e; }
+  .btn-primary:disabled { background: var(--border2); border-color: var(--border2); cursor: not-allowed; }
+  .btn-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1rem; }
+
+  /* ── Alerts ── */
+  .alert {
+    padding: 10px 14px; border-radius: var(--radius-sm);
+    font-size: 13px; margin-bottom: 1rem;
+    display: none;
+  }
+  .alert.show { display: block; }
+  .alert-error   { background: var(--danger-lt); color: var(--danger); border: 1px solid #F09595; }
+  .alert-success { background: var(--accent-lt); color: var(--accent); border: 1px solid var(--accent-md); }
+
+  /* ── Socio info box ── */
+  .socio-box {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 12px 14px;
+    margin-bottom: 1rem; display: none;
+  }
+  .socio-box.show { display: block; }
+  .socio-box .name { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .socio-box .meta { font-size: 13px; color: var(--muted); line-height: 1.9; }
+  .socio-box .meta span { color: var(--text); font-weight: 500; }
+
+  /* ── Month grid ── */
+  .month-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    margin-bottom: 1.25rem;
+  }
+  .month-btn {
+    font-size: 12px; font-weight: 500; padding: 8px 4px;
+    border-radius: var(--radius-sm); cursor: pointer;
+    border: 1px solid var(--border2); background: var(--surface);
+    color: var(--text); text-align: center; transition: all .15s;
+  }
+  .month-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-lt); }
+  .month-btn.selected { background: var(--accent); color: white; border-color: var(--accent); }
+  .month-btn.loaded { border-color: var(--accent-md); color: var(--accent); background: var(--accent-lt); }
+  .month-btn.loaded.selected { background: var(--accent); color: white; }
+
+  /* ── Month form ── */
+  .month-form {
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 1rem; margin-bottom: 1rem; display: none;
+    background: var(--bg);
+  }
+  .month-form.show { display: block; }
+  .month-form-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--accent); }
+
+  /* ── Summary table ── */
+  .summary-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .summary-table th {
+    text-align: left; padding: 8px 0; color: var(--muted);
+    border-bottom: 1px solid var(--border); font-weight: 500; font-size: 12px;
+  }
+  .summary-table td { padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    padding: 2px 8px; border-radius: 99px;
+    background: var(--accent-lt); color: var(--accent);
+  }
+
+  /* ── Spinner ── */
+  .spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.4); border-top-color: white;
+    border-radius: 50%; animation: spin .6s linear infinite; margin-right: 6px;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Step visibility ── */
+  .step-panel { display: none; }
+  .step-panel.active { display: block; }
+</style>
+</head>
+<body>
+
+<!-- Config banner -->
+<div class="config-banner show" id="configBanner">
+  <strong>⚙️ Configuración requerida</strong>
+  Reemplazá el valor de <code>SCRIPT_URL</code> al inicio del JS con la URL de tu Apps Script desplegado.
+  <a href="#instrucciones" style="color:inherit;font-weight:600">Ver instrucciones ↓</a>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="logo">📋</div>
+  <div>
+    <h1>Carga de facturas</h1>
+    <p>Sistema de gestión de socios</p>
+  </div>
+</div>
+
+<!-- Steps nav -->
+<div class="steps" id="stepsNav">
+  <div class="step-item">
+    <div class="step-circle active" id="dot1">1</div>
+    <div class="step-label">Buscar socio</div>
+  </div>
+  <div class="step-line"></div>
+  <div class="step-item">
+    <div class="step-circle" id="dot2">2</div>
+    <div class="step-label">Cargar meses</div>
+  </div>
+  <div class="step-line"></div>
+  <div class="step-item">
+    <div class="step-circle" id="dot3">3</div>
+    <div class="step-label">Confirmar</div>
+  </div>
+</div>
+
+<!-- ── STEP 1: Buscar socio ── -->
+<div class="step-panel active" id="step1">
+  <div class="card">
+    <p class="section-label">Paso 1 — Buscar socio</p>
+    <div class="field">
+      <label for="refAlumno">REF. ALUMNO</label>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="refAlumno" placeholder="Ingresá el código de referencia..." autocomplete="off" />
+        <button class="btn btn-primary" id="btnBuscar" onclick="buscarSocio()">Buscar</button>
+      </div>
+    </div>
+    <div class="alert alert-error" id="alertStep1"></div>
+    <div class="socio-box" id="socioBox">
+      <div class="name" id="socioNombre"></div>
+      <div class="meta" id="socioMeta"></div>
+    </div>
+    <div class="btn-row" id="btnContinuar" style="display:none">
+      <button class="btn btn-primary" onclick="goTo(2)">Cargar datos →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 2: Meses ── -->
+<div class="step-panel" id="step2">
+  <div class="card">
+    <p class="section-label">Paso 2 — Seleccioná el mes</p>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px;" id="socioInfoSmall"></div>
+    <div class="month-grid" id="monthGrid"></div>
+
+    <div class="month-form" id="monthForm">
+      <div class="month-form-title" id="monthFormTitle"></div>
+      <div class="field-row">
+        <div class="field">
+          <label>Monto ($)</label>
+          <input type="number" id="fieldMonto" placeholder="0.00" step="0.01" min="0" />
+        </div>
+        <div class="field">
+          <label>Nº Recibo</label>
+          <input type="text" id="fieldRecibo" placeholder="Ej: 0001234" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Donación ($) <span style="font-weight:400;color:var(--muted)">— opcional</span></label>
+        <input type="number" id="fieldDonacion" placeholder="0.00" step="0.01" min="0" />
+      </div>
+      <div class="btn-row">
+        <button class="btn" onclick="cancelMonth()">Cancelar</button>
+        <button class="btn btn-primary" onclick="guardarMes()">Guardar mes ✓</button>
+      </div>
+    </div>
+
+    <div class="alert alert-error"   id="alertStep2err"></div>
+    <div class="alert alert-success" id="alertStep2ok"></div>
+
+    <div class="btn-row">
+      <button class="btn" onclick="goTo(1)">← Cambiar socio</button>
+      <button class="btn btn-primary" onclick="goTo(3)">Ver resumen →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── STEP 3: Resumen + guardar ── -->
+<div class="step-panel" id="step3">
+  <div class="card">
+    <p class="section-label">Paso 3 — Resumen y confirmación</p>
+    <div id="summaryContent" style="margin-bottom:1.25rem;"></div>
+    <div class="alert alert-error"   id="alertStep3err"></div>
+    <div class="alert alert-success" id="alertStep3ok"></div>
+    <div class="btn-row">
+      <button class="btn" onclick="goTo(2)">← Editar</button>
+      <button class="btn btn-primary" id="btnGuardar" onclick="guardarEnSheet()">
+        Guardar en Google Sheets ↑
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── INSTRUCCIONES ── -->
+<div class="card" id="instrucciones" style="max-width:560px;">
+  <p class="section-label">📖 Instrucciones de configuración</p>
+  <ol style="font-size:13px;color:var(--muted);line-height:2;padding-left:1.2rem;">
+    <li>Abrí tu Google Sheet y andá a <strong style="color:var(--text)">Extensiones → Apps Script</strong></li>
+    <li>Borrá el código existente y pegá el contenido de <strong style="color:var(--text)">codigo.gs</strong></li>
+    <li>Guardá (Ctrl+S) y hacé clic en <strong style="color:var(--text)">Implementar → Nueva implementación</strong></li>
+    <li>Tipo: <strong style="color:var(--text)">App web</strong> — Acceso: <strong style="color:var(--text)">Cualquier usuario</strong></li>
+    <li>Copiá la URL generada y reemplazá <code>TU_URL_AQUI</code> abajo en el JS de este HTML</li>
+    <li>Subí este HTML a cualquier hosting gratuito (GitHub Pages, Netlify, Google Sites)</li>
+  </ol>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  REEMPLAZÁ ESTA URL CON LA DE TU APPS SCRIPT
+// ══════════════════════════════════════════════════
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxKy_AvRA59NWb9s4M_e5FWM9Zpxt9_NVJUBFczJSA9mSK3pm4yr_mmzqOuoUmjKU2JmQ/exec';
+
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+               'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+let currentSocio = null;
+let monthData    = {}; // { mesIdx: { monto, recibo, donacion } }
+let selectedMonth = null;
+
+// ── Navegación ─────────────────────────────────────
+function goTo(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById('step'+i).classList.toggle('active', i===n);
+    const dot = document.getElementById('dot'+i);
+    dot.classList.remove('active','done');
+    if (i < n)  dot.classList.add('done');
+    if (i === n) dot.classList.add('active');
+  });
+  if (n===2) initStep2();
+  if (n===3) renderSummary();
+}
+
+// ── Paso 1: Buscar socio ───────────────────────────
+async function buscarSocio() {
+  const ref = document.getElementById('refAlumno').value.trim();
+  if (!ref) { showAlert('alertStep1','error','Ingresá un código REF. ALUMNO.'); return; }
+
+  const btn = document.getElementById('btnBuscar');
+  btn.innerHTML = '<span class="spinner"></span> Buscando…';
+  btn.disabled = true;
+  clearAlert('alertStep1');
+  document.getElementById('socioBox').classList.remove('show');
+  document.getElementById('btnContinuar').style.display='none';
+
+  try {
+    const res  = await fetch(`${SCRIPT_URL}?action=buscar&ref=${encodeURIComponent(ref)}`);
+    const data = await res.json();
+
+    if (data.error) { showAlert('alertStep1','error', data.error); return; }
+
+    currentSocio = data.socio;
+    monthData = {};
+
+    // Pre-cargar datos existentes del sheet
+    Object.entries(currentSocio.meses).forEach(([k,v]) => {
+      if (v.monto || v.recibo || v.donacion) monthData[parseInt(k)] = v;
+    });
+
+    document.getElementById('socioNombre').textContent = currentSocio.nombre;
+    document.getElementById('socioMeta').innerHTML =
+      `Nº Socio: <span>${currentSocio.nroSocio}</span> &nbsp;·&nbsp; DNI: <span>${currentSocio.dni}</span>` +
+      (currentSocio.domicilio && currentSocio.domicilio !== '—' ? `<br>Domicilio: <span>${currentSocio.domicilio}</span>` : '') +
+      (currentSocio.telefono  && currentSocio.telefono  !== '—' ? `<br>Teléfono: <span>${currentSocio.telefono}</span>` : '');
+
+    document.getElementById('socioBox').classList.add('show');
+    document.getElementById('btnContinuar').style.display='flex';
+
+  } catch(e) {
+    showAlert('alertStep1','error','Error de conexión. Verificá la URL del script y tu conexión a internet.');
+  } finally {
+    btn.innerHTML = 'Buscar';
+    btn.disabled = false;
+  }
+}
+
+// ── Paso 2: Meses ──────────────────────────────────
+function initStep2() {
+  document.getElementById('socioInfoSmall').textContent = 'Socio: ' + currentSocio.nombre;
+  document.getElementById('monthForm').classList.remove('show');
+  selectedMonth = null;
+  buildMonthGrid();
+}
+
+function buildMonthGrid() {
+  const grid = document.getElementById('monthGrid');
+  grid.innerHTML = '';
+  MESES.forEach((m, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'month-btn' + (monthData[i] ? ' loaded' : '') + (selectedMonth===i ? ' selected' : '');
+    btn.textContent = m.substring(0,3);
+    btn.title = m;
+    btn.onclick = () => selectMonth(i);
+    grid.appendChild(btn);
+  });
+}
+
+function selectMonth(idx) {
+  selectedMonth = idx;
+  buildMonthGrid();
+  const existing = monthData[idx] || {};
+  document.getElementById('fieldMonto').value    = existing.monto    ?? '';
+  document.getElementById('fieldRecibo').value   = existing.recibo   ?? '';
+  document.getElementById('fieldDonacion').value = existing.donacion ?? '';
+  document.getElementById('monthFormTitle').textContent = MESES[idx];
+  document.getElementById('monthForm').classList.add('show');
+}
+
+function cancelMonth() {
+  document.getElementById('monthForm').classList.remove('show');
+  selectedMonth = null;
+  buildMonthGrid();
+}
+
+function guardarMes() {
+  if (selectedMonth === null) return;
+  const monto    = document.getElementById('fieldMonto').value.trim();
+  const recibo   = document.getElementById('fieldRecibo').value.trim();
+  const donacion = document.getElementById('fieldDonacion').value.trim();
+  if (!monto && !recibo) {
+    showAlert('alertStep2err','error','Ingresá al menos el monto o el Nº de recibo.');
+    return;
+  }
+  clearAlert('alertStep2err');
+  monthData[selectedMonth] = { monto, recibo, donacion };
+  cancelMonth();
+  showAlert('alertStep2ok','success', `✓ ${MESES[selectedMonth]} guardado.`);
+  setTimeout(()=>clearAlert('alertStep2ok'), 2000);
+}
+
+// ── Paso 3: Resumen ────────────────────────────────
+function renderSummary() {
+  const keys = Object.keys(monthData).map(Number).sort((a,b)=>a-b);
+  const el   = document.getElementById('summaryContent');
+  clearAlert('alertStep3err');
+  clearAlert('alertStep3ok');
+
+  if (!keys.length) {
+    el.innerHTML = '<p style="font-size:13px;color:var(--muted)">No cargaste datos para ningún mes todavía.</p>';
+    return;
+  }
+
+  const fmt = v => v ? '$' + parseFloat(v).toLocaleString('es-AR',{minimumFractionDigits:2}) : '—';
+  const rows = keys.map(i => `
+    <tr>
+      <td>${MESES[i]}</td>
+      <td>${fmt(monthData[i].monto)}</td>
+      <td>${monthData[i].recibo || '—'}</td>
+      <td>${fmt(monthData[i].donacion)}</td>
+    </tr>`).join('');
+
+  el.innerHTML = `
+    <div style="font-size:14px;margin-bottom:1rem;">
+      Socio: <strong>${currentSocio.nombre}</strong>
+      &nbsp;<span class="badge">${keys.length} ${keys.length===1?'mes':'meses'}</span>
+    </div>
+    <table class="summary-table">
+      <thead><tr><th>Mes</th><th>Monto</th><th>Nº Recibo</th><th>Donación</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// ── Guardar en Sheets ──────────────────────────────
+async function guardarEnSheet() {
+  const keys = Object.keys(monthData);
+  if (!keys.length) { showAlert('alertStep3err','error','No hay datos para guardar.'); return; }
+
+  const btn = document.getElementById('btnGuardar');
+  btn.innerHTML = '<span class="spinner"></span> Guardando…';
+  btn.disabled  = true;
+  clearAlert('alertStep3err');
+  clearAlert('alertStep3ok');
+
+  try {
+    const res  = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'guardar', rowIdx: currentSocio.rowIdx, meses: monthData })
+    });
+    const data = await res.json();
+
+    if (data.error) { showAlert('alertStep3err','error', data.error); return; }
+
+    showAlert('alertStep3ok','success','✓ ' + data.mensaje + ' Los cambios ya están en Google Sheets.');
+    monthData = {};
+    currentSocio = null;
+    setTimeout(() => {
+      goTo(1);
+      document.getElementById('refAlumno').value = '';
+      document.getElementById('socioBox').classList.remove('show');
+      document.getElementById('btnContinuar').style.display='none';
+      clearAlert('alertStep3ok');
+    }, 2500);
+
+  } catch(e) {
+    showAlert('alertStep3err','error','Error al guardar. Verificá tu conexión e intentá de nuevo.');
+  } finally {
+    btn.innerHTML = 'Guardar en Google Sheets ↑';
+    btn.disabled  = false;
+  }
+}
+
+// ── Helpers ────────────────────────────────────────
+function showAlert(id, type, msg) {
+  const el = document.getElementById(id);
+  el.className = `alert alert-${type} show`;
+  el.textContent = msg;
+}
+function clearAlert(id) {
+  const el = document.getElementById(id);
+  el.className = 'alert';
+  el.textContent = '';
+}
+
+// Enter en el input de búsqueda
+document.getElementById('refAlumno').addEventListener('keydown', e => {
+  if (e.key === 'Enter') buscarSocio();
+});
+
+// Ocultar banner si ya configuraste la URL
+if (SCRIPT_URL !== 'TU_URL_AQUI') {
+  document.getElementById('configBanner').classList.remove('show');
+}
+</script>
+</body>
+</html>
