@@ -276,8 +276,11 @@
           <input type="number" id="fieldMonto" placeholder="0.00" step="0.01" min="0" />
         </div>
         <div class="field">
-          <label>Nº Recibo</label>
-          <input type="text" id="fieldRecibo" placeholder="Ej: 0001234" />
+          <label>Nº Factura <span style="font-weight:400;color:var(--muted)">— últimos 3 dígitos</span></label>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:13px;color:var(--muted);white-space:nowrap;">00002-00000</span>
+            <input type="number" id="fieldRecibo" placeholder="001" min="0" max="999" style="width:72px;text-align:center;" />
+          </div>
         </div>
       </div>
       <div class="field">
@@ -315,20 +318,6 @@
     </div>
   </div>
 </div>
-
-<!-- ── INSTRUCCIONES ── -->
-<div class="card" id="instrucciones" style="max-width:560px;">
-  <p class="section-label">📖 Instrucciones de configuración</p>
-  <ol style="font-size:13px;color:var(--muted);line-height:2;padding-left:1.2rem;">
-    <li>Abrí tu Google Sheet y andá a <strong style="color:var(--text)">Extensiones → Apps Script</strong></li>
-    <li>Borrá el código existente y pegá el contenido de <strong style="color:var(--text)">codigo.gs</strong></li>
-    <li>Guardá (Ctrl+S) y hacé clic en <strong style="color:var(--text)">Implementar → Nueva implementación</strong></li>
-    <li>Tipo: <strong style="color:var(--text)">App web</strong> — Acceso: <strong style="color:var(--text)">Cualquier usuario</strong></li>
-    <li>Copiá la URL generada y reemplazá <code>TU_URL_AQUI</code> abajo en el JS de este HTML</li>
-    <li>Subí este HTML a cualquier hosting gratuito (GitHub Pages, Netlify, Google Sites)</li>
-  </ol>
-</div>
-
 <script>
 // ══════════════════════════════════════════════════
 //  REEMPLAZÁ ESTA URL CON LA DE TU APPS SCRIPT
@@ -392,8 +381,9 @@ async function buscarSocio() {
     });
 
     document.getElementById('socioNombre').textContent = currentSocio.nombre;
+    const nroDisplay = (currentSocio.nroSocio && currentSocio.nroSocio !== '—') ? currentSocio.nroSocio : (currentSocio.nroOrden || '—');
     document.getElementById('socioMeta').innerHTML =
-      `Nº Socio: <span>${currentSocio.nroSocio}</span> &nbsp;·&nbsp; DNI: <span>${currentSocio.dni}</span>` +
+      `Nº Orden/Socio: <span>${nroDisplay}</span> &nbsp;·&nbsp; DNI: <span>${currentSocio.dni}</span>` +
       (currentSocio.domicilio && currentSocio.domicilio !== '—' ? `<br>Domicilio: <span>${currentSocio.domicilio}</span>` : '') +
       (currentSocio.telefono  && currentSocio.telefono  !== '—' ? `<br>Teléfono: <span>${currentSocio.telefono}</span>` : '');
 
@@ -456,7 +446,8 @@ function guardarMes() {
     return;
   }
   clearAlert('alertStep2err');
-  monthData[selectedMonth] = { monto, recibo, donacion };
+  const reciboFull = recibo ? '00002-00000' + String(recibo).padStart(3,'0') : '';
+  monthData[selectedMonth] = { monto, recibo: reciboFull, donacion };
   cancelMonth();
   showAlert('alertStep2ok','success', `✓ ${MESES[selectedMonth]} guardado.`);
   setTimeout(()=>clearAlert('alertStep2ok'), 2000);
