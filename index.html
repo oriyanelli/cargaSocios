@@ -189,6 +189,19 @@
     background: var(--accent-lt); color: var(--accent);
   }
 
+  /* ── Selector múltiple ── */
+  .socio-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem; }
+  .socio-option {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; border: 1px solid var(--border2);
+    border-radius: var(--radius-sm); cursor: pointer;
+    background: var(--surface); transition: all .15s;
+  }
+  .socio-option:hover { border-color: var(--accent); background: var(--accent-lt); }
+  .socio-option .opt-nombre { font-size: 14px; font-weight: 500; }
+  .socio-option .opt-ref    { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .socio-option .opt-arrow  { color: var(--accent); font-size: 16px; }
+
   /* ── Spinner ── */
   .spinner {
     display: inline-block; width: 14px; height: 14px;
@@ -255,6 +268,10 @@
       <div class="name" id="socioNombre"></div>
       <div class="meta" id="socioMeta"></div>
     </div>
+    <div id="multipleBox" style="display:none">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:10px;">Se encontraron varios alumnos. Seleccioná el que corresponde:</p>
+      <div class="socio-list" id="socioList"></div>
+    </div>
     <div class="btn-row" id="btnContinuar" style="display:none">
       <button class="btn btn-primary" onclick="goTo(2)">Cargar datos →</button>
     </div>
@@ -318,6 +335,7 @@
     </div>
   </div>
 </div>
+
 <script>
 // ══════════════════════════════════════════════════
 //  REEMPLAZÁ ESTA URL CON LA DE TU APPS SCRIPT
@@ -330,6 +348,42 @@ const MESES = ['Febrero','Marzo','Abril','Mayo','Junio',
 let currentSocio = null;
 let monthData    = {}; // { mesIdx: { monto, recibo, donacion } }
 let selectedMonth = null;
+
+// ── Selección de socio ────────────────────────────
+async function seleccionarSocio(rowIdx) {
+  document.getElementById('multipleBox').style.display = 'none';
+  const btn = document.getElementById('btnBuscar');
+  btn.innerHTML = '<span class="spinner"></span> Cargando…';
+  btn.disabled = true;
+  try {
+    const data = await jsonp(`${SCRIPT_URL}?action=getSocio&rowIdx=${rowIdx}`);
+    if (data.error) { showAlert('alertStep1','error', data.error); return; }
+    mostrarSocio(data.socio);
+  } catch(e) {
+    showAlert('alertStep1','error','Error al cargar el socio.');
+  } finally {
+    btn.innerHTML = 'Buscar';
+    btn.disabled = false;
+  }
+}
+
+function mostrarSocio(socio) {
+  currentSocio = socio;
+  monthData = {};
+  Object.entries(currentSocio.meses).forEach(([k,v]) => {
+    if (v.monto || v.recibo || v.donacion) monthData[parseInt(k)] = v;
+  });
+  const nroDisplay = (currentSocio.nroSocio && currentSocio.nroSocio !== '—') ? currentSocio.nroSocio : (currentSocio.nroOrden || '—');
+  document.getElementById('socioNombre').textContent = currentSocio.nombre;
+  document.getElementById('socioMeta').innerHTML =
+    `Nº Orden/Socio: <span>${nroDisplay}</span> &nbsp;·&nbsp; REF: <span>${currentSocio.ref}</span>` +
+    (currentSocio.dni && currentSocio.dni !== '—' ? ` &nbsp;·&nbsp; DNI: <span>${currentSocio.dni}</span>` : '') +
+    (currentSocio.domicilio && currentSocio.domicilio !== '—' ? `<br>Domicilio: <span>${currentSocio.domicilio}</span>` : '') +
+    (currentSocio.telefono  && currentSocio.telefono  !== '—' ? `<br>Teléfono: <span>${currentSocio.telefono}</span>` : '');
+  document.getElementById('socioBox').classList.add('show');
+  document.getElementById('btnContinuar').style.display='flex';
+  document.getElementById('multipleBox').style.display='none';
+}
 
 // ── Navegación ─────────────────────────────────────
 function goTo(n) {
@@ -367,28 +421,29 @@ async function buscarSocio() {
   clearAlert('alertStep1');
   document.getElementById('socioBox').classList.remove('show');
   document.getElementById('btnContinuar').style.display='none';
+  document.getElementById('multipleBox').style.display='none';
 
   try {
     const data = await jsonp(`${SCRIPT_URL}?action=buscar&ref=${encodeURIComponent(ref)}`);
 
     if (data.error) { showAlert('alertStep1','error', data.error); return; }
 
-    currentSocio = data.socio;
-    monthData = {};
+    // Múltiples resultados — mostrar lista para elegir
+    if (data.multiples) {
+      document.getElementById('multipleBox').style.display = 'block';
+      const list = document.getElementById('socioList');
+      list.innerHTML = '';
+      data.multiples.forEach(op => {
+        const div = document.createElement('div');
+        div.className = 'socio-option';
+        div.innerHTML = `<div><div class="opt-nombre">${op.nombre}</div><div class="opt-ref">${op.ref}</div></div><span class="opt-arrow">→</span>`;
+        div.onclick = () => seleccionarSocio(op.rowIdx);
+        list.appendChild(div);
+      });
+      return;
+    }
 
-    Object.entries(currentSocio.meses).forEach(([k,v]) => {
-      if (v.monto || v.recibo || v.donacion) monthData[parseInt(k)] = v;
-    });
-
-    document.getElementById('socioNombre').textContent = currentSocio.nombre;
-    const nroDisplay = (currentSocio.nroSocio && currentSocio.nroSocio !== '—') ? currentSocio.nroSocio : (currentSocio.nroOrden || '—');
-    document.getElementById('socioMeta').innerHTML =
-      `Nº Orden/Socio: <span>${nroDisplay}</span> &nbsp;·&nbsp; DNI: <span>${currentSocio.dni}</span>` +
-      (currentSocio.domicilio && currentSocio.domicilio !== '—' ? `<br>Domicilio: <span>${currentSocio.domicilio}</span>` : '') +
-      (currentSocio.telefono  && currentSocio.telefono  !== '—' ? `<br>Teléfono: <span>${currentSocio.telefono}</span>` : '');
-
-    document.getElementById('socioBox').classList.add('show');
-    document.getElementById('btnContinuar').style.display='flex';
+    mostrarSocio(data.socio);
 
   } catch(e) {
     showAlert('alertStep1','error','Error de conexión. Verificá la URL del script y tu conexión a internet.');
