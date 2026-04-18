@@ -333,7 +333,7 @@
 // ══════════════════════════════════════════════════
 //  REEMPLAZÁ ESTA URL CON LA DE TU APPS SCRIPT
 // ══════════════════════════════════════════════════
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxKy_AvRA59NWb9s4M_e5FWM9Zpxt9_NVJUBFczJSA9mSK3pm4yr_mmzqOuoUmjKU2JmQ/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyB__5WYIzVzjeN8O2vK7FwQuImCj8xlXazdiPP_jKvM3uIOmRprHl-35_TjqQpO84BDg/exec';
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
                'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -355,6 +355,18 @@ function goTo(n) {
   if (n===3) renderSummary();
 }
 
+// ── JSONP helper (evita CORS con Apps Script) ──────
+function jsonp(url) {
+  return new Promise((resolve, reject) => {
+    const cb = 'cb_' + Math.random().toString(36).slice(2);
+    window[cb] = data => { delete window[cb]; document.head.removeChild(sc); resolve(data); };
+    const sc = document.createElement('script');
+    sc.src = url + '&callback=' + cb;
+    sc.onerror = () => { delete window[cb]; document.head.removeChild(sc); reject(new Error('Error de red')); };
+    document.head.appendChild(sc);
+  });
+}
+
 // ── Paso 1: Buscar socio ───────────────────────────
 async function buscarSocio() {
   const ref = document.getElementById('refAlumno').value.trim();
@@ -368,15 +380,13 @@ async function buscarSocio() {
   document.getElementById('btnContinuar').style.display='none';
 
   try {
-    const res  = await fetch(`${SCRIPT_URL}?action=buscar&ref=${encodeURIComponent(ref)}`);
-    const data = await res.json();
+    const data = await jsonp(`${SCRIPT_URL}?action=buscar&ref=${encodeURIComponent(ref)}`);
 
     if (data.error) { showAlert('alertStep1','error', data.error); return; }
 
     currentSocio = data.socio;
     monthData = {};
 
-    // Pre-cargar datos existentes del sheet
     Object.entries(currentSocio.meses).forEach(([k,v]) => {
       if (v.monto || v.recibo || v.donacion) monthData[parseInt(k)] = v;
     });
@@ -496,11 +506,8 @@ async function guardarEnSheet() {
   clearAlert('alertStep3ok');
 
   try {
-    const res  = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'guardar', rowIdx: currentSocio.rowIdx, meses: monthData })
-    });
-    const data = await res.json();
+    const url  = `${SCRIPT_URL}?action=guardar&rowIdx=${currentSocio.rowIdx}&meses=${encodeURIComponent(JSON.stringify(monthData))}`;
+    const data = await jsonp(url);
 
     if (data.error) { showAlert('alertStep3err','error', data.error); return; }
 
