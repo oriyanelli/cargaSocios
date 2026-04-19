@@ -331,8 +331,20 @@ function jsonp(url) {
 async function cargarTodos() {
   try {
     const data = await jsonp(`${SCRIPT_URL}?action=todos`);
-    if (data.ok) todosLosSocios = data.lista;
-  } catch(e) { console.warn('No se pudo cargar lista:', e); }
+    if (data.ok) {
+      todosLosSocios = data.lista;
+      console.log('Socios cargados:', todosLosSocios.length);
+      searchInput.placeholder = `Buscar entre ${todosLosSocios.length} alumnos...`;
+    } else {
+      console.error('Error del script:', data.error);
+      searchInput.placeholder = 'Error al cargar lista (' + (data.error||'desconocido') + ')';
+      searchInput.style.borderColor = 'var(--danger)';
+    }
+  } catch(e) {
+    console.error('Error de conexión:', e);
+    searchInput.placeholder = 'Error de conexión — revisá la URL del script';
+    searchInput.style.borderColor = 'var(--danger)';
+  }
 }
 cargarTodos();
 
