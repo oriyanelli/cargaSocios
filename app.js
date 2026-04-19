@@ -117,10 +117,7 @@ searchInput.addEventListener('input', () => {
     }
 
     // Resaltar el texto buscado
- const hl = txt => { try { 
-  return txt.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), 
-    m => `<mark style="background:var(--accent-lt);color:var(--accent);border-radius:2px">${m}</mark>`); 
-} catch(e) { return txt; } };
+    const hl = txt => { try { return txt.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), m => `<mark style="background:var(--accent-lt);color:var(--accent);border-radius:2px">${m}</mark>`); } catch(e) { return txt; } };
 
     acBox.innerHTML = matches.map((s, i) => `
       <div class="ac-item" data-idx="${i}" data-rowidx="${s.rowIdx}" onclick="elegirSocio(${s.rowIdx})">
