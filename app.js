@@ -1,6 +1,3 @@
-// ══════════════════════════════════════════════
-//  REEMPLAZÁ CON TU URL DE APPS SCRIPT
-// ══════════════════════════════════════════════
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyB__5WYIzVzjeN8O2vK7FwQuImCj8xlXazdiPP_jKvM3uIOmRprHl-35_TjqQpO84BDg/exec';
 
 const MESES = ['Febrero','Marzo','Abril','Mayo','Junio',
@@ -116,8 +113,17 @@ searchInput.addEventListener('input', () => {
       return;
     }
 
-    // Resaltar el texto buscado
-    const hl = txt => { try { return txt.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), m => `<mark style="background:var(--accent-lt);color:var(--accent);border-radius:2px">${m}</mark>`); } catch(e) { return txt; } };
+    // Resaltar el texto buscado (sin regex)
+    const hl = txt => {
+      const lo = txt.toLowerCase();
+      const idx = lo.indexOf(q);
+      if (idx === -1) return txt;
+      return txt.slice(0, idx) +
+        '<mark style="background:var(--accent-lt);color:var(--accent);border-radius:2px">' +
+        txt.slice(idx, idx + q.length) +
+        '</mark>' +
+        txt.slice(idx + q.length);
+    };
 
     acBox.innerHTML = matches.map((s, i) => `
       <div class="ac-item" data-idx="${i}" data-rowidx="${s.rowIdx}" onclick="elegirSocio(${s.rowIdx})">
