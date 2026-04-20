@@ -77,7 +77,10 @@
     <!-- Panel 2: meses -->
     <div class="panel" id="panel2">
       <div class="card">
-        <p class="section-label">Seleccioná el mes a cargar</p>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+          <p class="section-label" style="margin-bottom:0">Seleccioná el mes a cargar</p>
+          <button class="btn" id="btnAnual" onclick="toggleAnual()" style="font-size:12px;padding:5px 12px">📅 Pago anual</button>
+        </div>
         <div class="month-grid" id="monthGrid"></div>
 
         <div class="month-form" id="monthForm">
@@ -132,6 +135,39 @@
             <button class="btn" onclick="cancelMonth()">Cancelar</button>
             <button class="btn btn-primary" onclick="guardarMes()">Guardar mes ✓</button>
           </div>
+        </div>
+
+        <!-- Pago anual -->
+        <div class="annual-section" id="annualSection" style="display:none">
+          <div class="annual-header">
+            <span>📅 Pago anual</span>
+            <button class="btn" style="font-size:12px;padding:4px 10px" onclick="cerrarAnual()">✕</button>
+          </div>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:1rem">
+            El monto se carga en Febrero. El Nº de factura se replica en todos los meses restantes.
+          </p>
+          <div class="field-row">
+            <div class="field">
+              <label>Monto anual ($)</label>
+              <input type="number" id="annualMonto" placeholder="0.00" step="0.01" min="0" />
+            </div>
+            <div class="field">
+              <label>Nº Factura — últimos 3 dígitos</label>
+              <div class="prefix-input">
+                <span>00002-00000</span>
+                <input type="number" id="annualRecibo" placeholder="001" min="0" max="999" />
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Donación ($) <span style="font-weight:400;color:var(--muted)">— opcional</span></label>
+            <input type="number" id="annualDonacion" placeholder="0.00" step="0.01" min="0" />
+          </div>
+          <div class="alert alert-error" id="alertAnual"></div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="aplicarAnual()">Aplicar a todos los meses ✓</button>
+          </div>
+        <div style="display:none"><!-- close annual --></div>
         </div>
 
         <div class="alert alert-error"   id="alertStep2err"></div>

@@ -142,3 +142,8 @@ input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(26
   .step-item-v{flex-direction:column;gap:4px;padding:8px;min-width:70px;text-align:center}
   .step-label-v{font-size:11px}
 }
+
+/* ── Pago anual ── */
+.annual-section{background:var(--accent-lt);border:1px solid var(--accent-md);border-radius:var(--radius-sm);padding:1.25rem;margin-bottom:1rem}
+.annual-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
+.annual-header span{font-size:14px;font-weight:600;color:var(--accent)}
