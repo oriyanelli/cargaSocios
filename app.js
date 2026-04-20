@@ -354,6 +354,53 @@ async function guardarEnSheet() {
   }
 }
 
+
+// ── Pago anual ──────────────────────────────────
+function toggleAnual() {
+  const sec = document.getElementById('annualSection');
+  const form = document.getElementById('monthForm');
+  const visible = sec.style.display !== 'none';
+  sec.style.display  = visible ? 'none' : 'block';
+  form.classList.remove('show');
+  selectedMonth = null;
+  buildMonthGrid();
+}
+
+function cerrarAnual() {
+  document.getElementById('annualSection').style.display = 'none';
+}
+
+function aplicarAnual() {
+  const monto    = document.getElementById('annualMonto').value.trim();
+  const recibo   = document.getElementById('annualRecibo').value.trim();
+  const donacion = document.getElementById('annualDonacion').value.trim();
+
+  if (!monto && !recibo) {
+    showAlert('alertAnual','error','Ingresá al menos el monto o el Nº de factura.');
+    return;
+  }
+  clearAlert('alertAnual');
+
+  const reciboFull = recibo ? '00002-00000' + String(recibo).padStart(3,'0') : '';
+
+  // Mes 0 = Febrero: monto + factura
+  // Meses 1-10 = Marzo a Diciembre: solo factura
+  MESES.forEach((m, i) => {
+    monthData[i] = {
+      monto:    i === 0 ? monto : '',   // solo en Febrero
+      recibo:   reciboFull,
+      monto2:   '',
+      recibo2:  '',
+      donacion: i === 0 ? donacion : '' // donación solo en Febrero
+    };
+  });
+
+  cerrarAnual();
+  buildMonthGrid();
+  showAlert('alertStep2ok','success','✓ Pago anual aplicado a todos los meses.');
+  setTimeout(() => clearAlert('alertStep2ok'), 3000);
+}
+
 // ── Helpers ────────────────────────────────────
 function showAlert(id, type, msg) {
   const el = document.getElementById(id);
